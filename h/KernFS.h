@@ -1,7 +1,7 @@
 // File: fs.h
 #pragma once
 #include "KernPart.h"
-#include "criticalsection.h"
+#include "synch.h"
 #include "fs.h"
 
 class KernFS {

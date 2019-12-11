@@ -16,7 +16,7 @@ class BitVector {
 public:
     BitVector(ClusterNo size, KernPart* p);
     ClusterNo getFirstEmpty();
-    void makeFree(ClusterNo clNo);
+    void free(ClusterNo clNo);
     void format();
     void writeToDisk();
     ~BitVector();

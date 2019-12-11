@@ -60,7 +60,7 @@ ClusterNo BitVector::getFirstEmpty() {
     return ret;
 }
 
-void BitVector::makeFree(ClusterNo cl) {
+void BitVector::free(ClusterNo cl) {
     // cash free
     cachefree->push_back(cl);
     setfree(cl);

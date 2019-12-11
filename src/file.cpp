@@ -5,26 +5,18 @@ File::File() { myImpl = new KernFile(); }
 
 File::~File() { delete myImpl; }
 
-char File::write(BytesCnt b, char* buffer) {
-    if (myImpl) return myImpl->write(b, buffer);
-}
+char File::write(BytesCnt b, char* buffer) { return myImpl->write(b, buffer); }
+
 BytesCnt File::read(BytesCnt b, char* buffer) {
-    if (myImpl) myImpl->read(b, buffer);
+    return myImpl->read(b, buffer);
 }
 
-char File::seek(BytesCnt b) {
-    if (myImpl) return myImpl->seek(b);
-}
-BytesCnt File::filePos() {
-    if (myImpl) return myImpl->filePos();
-}
+char File::seek(BytesCnt b) { return myImpl->seek(b); }
 
-char File::eof() {
-    if (myImpl) return myImpl->eof();
-}
-BytesCnt File::getFileSize() {
-    if (myImpl) return myImpl->getFileSize();
-}
-char File::truncate() {
-    if (myImpl) return myImpl->truncate();
-}
+BytesCnt File::filePos() { return myImpl->filePos(); }
+
+char File::eof() { return myImpl->eof(); }
+
+BytesCnt File::getFileSize() { return myImpl->getFileSize(); }
+
+char File::truncate() { return myImpl->truncate(); }
