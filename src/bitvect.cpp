@@ -4,14 +4,14 @@
 #include "kernpart.h"
 
 BitVector::BitVector(ClusterNo sz, KernPart* p) : part(p), size(sz) {
-    //bitvect pocinje od nule, zauzima vise od jednog clustera???
+    // bitvect pocinje od nule, zauzima vise od jednog clustera???
 
     // jedan vise od size
     clNo = size / BitClusterSize + (ClusterNo)(size % BitClusterSize > 0);
     cachefree = new list<ClusterNo>();
 
     bitVect = new char*[clNo];
-    for (int i = 0; i < clNo; i++) {
+    for (size_t i = 0; i < clNo; i++) {
         bitVect[i] = new char[ClusterSize];
         part->readCluster(i, (char*)bitVect[i]);
     }
@@ -28,9 +28,9 @@ void BitVector::findfree() {
     // greska ako ne nadje nista?
     while (!bitVect[freeCl / BitClusterSize][(freeCl % BitClusterSize) / 8] &
            (1 << (7 - freeCl % 8)))
-        freeCl = (freeCl+1)%size;
+        freeCl = (freeCl + 1) % size;
 
-    //inf while ako ne nadje lolololol
+    // inf while ako ne nadje lolololol
 }
 
 ClusterNo BitVector::getFirstEmpty() {
@@ -41,7 +41,7 @@ ClusterNo BitVector::getFirstEmpty() {
         if (!bitVect[tmp / BitClusterSize][(tmp % BitClusterSize) / 8] &
             ((1 << (7 - tmp % 8)))) {
             cout << "BitVector::getFirstEmpty() - "
-                    "?????????????????????????????????"
+                    "?????????"
                  << endl;
             continue;
         }
@@ -67,31 +67,31 @@ void BitVector::makeFree(ClusterNo cl) {
 }
 
 void BitVector::format() {
-    for (int i = 0; i < clNo; i++)
+    for (size_t i = 0; i < clNo; i++)
         for (int j = 0; j < ClusterSize; j++) bitVect[i][j] = -1;
 
     // prvih clno je zauzeto za bitvect
-    int i = 0;
+    size_t i = 0;
     for (i = 0; i < clNo; i += 8) {
         bitVect[0][i / 8] = ~0;
     }
     for (; i <= clNo; i++) bitVect[0][i / 8] ^= (1 << (7 - i % 8));
 
+    // krece od posle bitvect
     freeCl = clNo + 1;
     cachefree->clear();
 }
 
 void BitVector::writeToDisk() {
-    for (int i = 0; i < clNo; i++) myPartition->writeCluster(i, bitVect[i]);
+    for (int i = 0; i < clNo; i++) part->writeCluster(i, bitVect[i]);
 }
 
 ClusterNo BitVector::getRootPosition() { return clNo; }
 
 BitVector::~BitVector() {
-    for (int i = 0; i < clNo; i++) {
-        myPartition->writeCluster(i, bitVect[i]);
-        delete bitVect[i];
-    }
+    writeToDisk();
+
+    for (size_t i = 0; i < clNo; i++) delete bitVect[i];
     delete cachefree;
     delete bitVect;
 }
