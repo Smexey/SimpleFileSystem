@@ -34,7 +34,7 @@ char KernFile::eof() {
 
 char KernFile::seek(BytesCnt b) {
     if (b > size) return 0;
-    setcurr(size);
+    setcurr(b);
     return 1;
 }
 
