@@ -72,7 +72,7 @@ bool KernFile::readByte(char* ch) {
         ClusterNo t;
         // ((x-256)/512) offs od pola
         // + 256 offs od starta
-        ClusterNo lvl1ind = (curr - singleTableInd) / clusIndNum + singleTableInd;
+        ClusterNo lvl1ind = (currClus - singleTableInd) / clusIndNum + singleTableInd;
 
         t = ((ClusterNo*)rootCache)[lvl1ind];
 
@@ -88,7 +88,7 @@ bool KernFile::readByte(char* ch) {
         }
 
         // ((x-256)%512) offs od starta jednog od lvl2 clus
-        ClusterNo lvl2ind = (curr - singleTableInd) % clusIndNum;
+        ClusterNo lvl2ind = (currClus - singleTableInd) % clusIndNum;
         t = ((ClusterNo*)helpCache)[lvl2ind];
 
         // new lvl2 => data also not cached
@@ -184,7 +184,7 @@ bool KernFile::writeByte(char* ch) {
         }
 
         // // ((x-256)%512) offs od starta jednog od lvl2 clus
-        ClusterNo lvl2ind = (curr - singleTableInd) % clusIndNum;
+        ClusterNo lvl2ind = (currClus - singleTableInd) % clusIndNum;
 
         // new lvl2 => data also not cached, would have had a hit prior
         ClusterNo newClus = part->getNewEmpty();
@@ -214,4 +214,32 @@ char KernFile::write(BytesCnt b, char* buffer) {
     return (i == b);
 }
 
-char KernFile::truncate() {}
+char KernFile::truncate() {
+    ClusterNo currClusDel = currClus + (int)currOffs > 0;
+    ClusterNo sizeInClus = size / ClusterSize + size % ClusterSize ? 1 : 0;
+
+    // delete lvl1
+    for (; currClusDel < sizeInClus && currClusDel < singleTableInd; currClusDel++)
+        part->freeCluster(((ClusterNo*)rootCache)[currClusDel]);
+
+    // delete lvl2
+    char delCache[ClusterSize];
+
+    // in case start is >256, has to load first
+    if (currClus > singleTableInd && !((currClusDel - singleTableInd) % 512 == 0)) {
+        part->readCluster(
+            ((ClusterNo*)rootCache)[(currClusDel - singleTableInd) / clusIndNum + singleTableInd],
+            delCache);
+    }
+
+    for (; currClusDel < sizeInClus; currClusDel++) {
+        if ((currClusDel - singleTableInd) % 512 == 0) {
+            // load del(help) cache
+            ClusterNo rootDelNumlvl2 = (currClusDel - singleTableInd) / clusIndNum + singleTableInd;
+            part->readCluster(((ClusterNo*)rootCache)[rootDelNumlvl2], delCache);
+        }
+        part->freeCluster(((ClusterNo*)delCache)[(currClusDel - singleTableInd) % clusIndNum]);
+    }
+
+    return 1;
+}

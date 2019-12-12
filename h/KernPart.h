@@ -13,6 +13,7 @@ public:
     virtual int writeCluster(ClusterNo, const char* buffer);
 
     
+    void freeCluster(ClusterNo);
     ClusterNo getNewEmpty();
     void saveandclose();
 };

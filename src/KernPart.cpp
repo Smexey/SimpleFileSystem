@@ -8,3 +8,4 @@ int KernPart::writeCluster(ClusterNo n, const char* buffer) { part->writeCluster
 
 void KernPart::saveandclose() {}
 ClusterNo KernPart::getNewEmpty() {}
+void KernPart::freeCluster(ClusterNo) {}
