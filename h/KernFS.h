@@ -1,8 +1,8 @@
 // File: fs.h
 #pragma once
 #include "KernPart.h"
-#include "synch.h"
 #include "fs.h"
+#include "synch.h"
 
 class KernFS {
     KernPart* kernpart;
@@ -13,7 +13,6 @@ protected:
     KernFS(const KernFS&);             // Prevent construction by copying
     KernFS& operator=(const KernFS&);  // Prevent assignment
 public:
-
     KernFS();
     ~KernFS();
 

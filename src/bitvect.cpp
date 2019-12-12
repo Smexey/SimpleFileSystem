@@ -4,26 +4,27 @@
 #include "kernpart.h"
 
 BitVector::BitVector(ClusterNo sz, KernPart* p) : part(p), size(sz) {
+    InitializeCriticalSection(&cs);
     // bitvect pocinje od nule, zauzima vise od jednog clustera???
 
     // jedan vise od size
-    clNo = size / BitClusterSize + (ClusterNo)(size % BitClusterSize > 0);
+    clusterNum = size / BitClusterSize + (ClusterNo)(size % BitClusterSize > 0);
     cachefree = new list<ClusterNo>();
 
-    bitVect = new char*[clNo];
-    for (size_t i = 0; i < clNo; i++) {
+    bitVect = new char*[clusterNum];
+    for (size_t i = 0; i < clusterNum; i++) {
         bitVect[i] = new char[ClusterSize];
         part->readCluster(i, (char*)bitVect[i]);
     }
 
     // prvih clno je bitvector clusteri
-    freeCl = clNo + 1;
+    freeCl = clusterNum + 1;
 
     // trazi prvi slobodan
-    findfree();
+    findFree();
 }
 
-void BitVector::findfree() {
+void BitVector::findFree() {
     // finds next free from current freeCL
     // greska ako ne nadje nista?
     while (!bitVect[freeCl / BitClusterSize][(freeCl % BitClusterSize) / 8] &
@@ -34,6 +35,8 @@ void BitVector::findfree() {
 }
 
 ClusterNo BitVector::getFirstEmpty() {
+    CriticalSectionLock lck(cs);
+
     while (!cachefree->empty()) {
         ClusterNo tmp = cachefree->front();
         cachefree->pop_front();
@@ -49,49 +52,52 @@ ClusterNo BitVector::getFirstEmpty() {
         return tmp;
     }
 
-    findfree();
+    findFree();
 
     ClusterNo ret = freeCl;
-    setnotfree(freeCl);
+    setNotFree(freeCl);
 
     // treba li mi?
-    findfree();
+    findFree();
 
     return ret;
 }
 
 void BitVector::free(ClusterNo cl) {
-    // cash free
+    CriticalSectionLock lck(cs);
+    // cache free
     cachefree->push_back(cl);
-    setfree(cl);
+    setFree(cl);
 }
 
 void BitVector::format() {
-    for (size_t i = 0; i < clNo; i++)
+    // CriticalSectionLock lck(cs);
+
+    for (size_t i = 0; i < clusterNum; i++)
         for (int j = 0; j < ClusterSize; j++) bitVect[i][j] = -1;
 
     // prvih clno je zauzeto za bitvect
     size_t i = 0;
-    for (i = 0; i < clNo; i += 8) {
+    for (i = 0; i < clusterNum; i += 8) {
         bitVect[0][i / 8] = ~0;
     }
-    for (; i <= clNo; i++) bitVect[0][i / 8] ^= (1 << (7 - i % 8));
+    for (; i <= clusterNum; i++) bitVect[0][i / 8] ^= (1 << (7 - i % 8));
 
     // krece od posle bitvect
-    freeCl = clNo + 1;
+    freeCl = clusterNum + 1;
     cachefree->clear();
 }
 
 void BitVector::writeToDisk() {
-    for (int i = 0; i < clNo; i++) part->writeCluster(i, bitVect[i]);
+    for (int i = 0; i < clusterNum; i++) part->writeCluster(i, bitVect[i]);
 }
 
-ClusterNo BitVector::getRootPosition() { return clNo; }
+ClusterNo BitVector::getRootPosition() { return clusterNum; }
 
 BitVector::~BitVector() {
     writeToDisk();
 
-    for (size_t i = 0; i < clNo; i++) delete bitVect[i];
+    for (size_t i = 0; i < clusterNum; i++) delete bitVect[i];
     delete cachefree;
     delete bitVect;
 }
