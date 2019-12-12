@@ -4,7 +4,9 @@
 #include "fs.h"
 
 class KernFile {
+    constexpr static ClusterNo clusIndNum = 512;
     constexpr static ClusterNo nullClusterNo = -1;  // init values
+    constexpr static ClusterNo singleTableInd = clusIndNum / 2;
 
     char mode;
     KernPart* part;
@@ -15,8 +17,8 @@ class KernFile {
     BytesCnt currClus = 0;
     BytesCnt currOffs = 0;
 
-    // current data cluster offset
-    ClusterNo currentData = nullClusterNo;
+    // current data offset in clusters
+    ClusterNo currentDataClusOffs = nullClusterNo;
     // indexes of chached blocks
     ClusterNo dataCacheClusNum = nullClusterNo;
     ClusterNo helpCacheClusNum = nullClusterNo;
@@ -31,8 +33,15 @@ class KernFile {
     bool dirtyHelp = false;
     bool dirtyData = false;
 
-    void readByte(char* where);
-    void writeByte(char* ch);
+    // returns true if rd/wr
+    bool readByte(char* where);
+    bool writeByte(char* ch);
+
+    void setcurr(BytesCnt n) {
+        curr = n;
+        currClus = curr / ClusterSize;
+        currOffs = curr % ClusterSize;
+    }
 
 public:
     KernFile(KernPart* p, char m);
