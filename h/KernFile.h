@@ -8,11 +8,12 @@ class KernFile {
 
     char mode;
     KernPart* part;
+    BytesCnt size;
 
-    //cursors
-    BytesCnt curr;
-    BytesCnt currClus;
-    BytesCnt currOffs;
+    // cursors
+    BytesCnt curr = 0;
+    BytesCnt currClus = 0;
+    BytesCnt currOffs = 0;
 
     // current data cluster offset
     ClusterNo currentData = nullClusterNo;
@@ -26,12 +27,13 @@ class KernFile {
     char helpCache[ClusterSize];  // dynamic? smara me
     char dataCache[ClusterSize];
 
-    bool dirtyRoot;
-    bool dirtyHelp;
-    bool dirtyData;
+    bool dirtyRoot = false;
+    bool dirtyHelp = false;
+    bool dirtyData = false;
 
-    void readByte(char * where);
-    void writeByte(char * ch);
+    void readByte(char* where);
+    void writeByte(char* ch);
+
 public:
     KernFile(KernPart* p, char m);
 
