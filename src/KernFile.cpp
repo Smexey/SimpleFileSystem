@@ -159,8 +159,6 @@ bool KernFile::writeByte(char* ch) {
 
         t = ((ClusterNo*)rootCache)[lvl1ind];
 
-        ///////////////////////////////ne valja///////////////////////////
-
         //(curr - singleTableInd) % clusIndNum;  *ClusterSize
         bool endofhelpcache =
             (size - ClusterSize * singleTableInd) % (ClusterSize * clusIndNum) == 0;
@@ -224,7 +222,6 @@ char KernFile::truncate() {
 
     // delete lvl2
     char delCache[ClusterSize];
-
     // in case start is >256, has to load first
     if (currClus > singleTableInd && !((currClusDel - singleTableInd) % 512 == 0)) {
         part->readCluster(
