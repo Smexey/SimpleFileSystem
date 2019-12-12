@@ -9,9 +9,11 @@ KernFile::KernFile(KernPart* p, char m) : part(p), mode(m) {
     switch (mode) {
         case 'a':
             setcurr(size);
+            // treba ucitati sva tri cachea
             break;
 
         case 'w':
+            setcurr(0);
             truncate();
             break;
 
@@ -205,6 +207,11 @@ bool KernFile::writeByte(char* ch) {
     return true;
 }
 
-char KernFile::write(BytesCnt b, char* buffer) {}
+char KernFile::write(BytesCnt b, char* buffer) {
+    BytesCnt i;
+    for (i = 0; i < b && writeByte(buffer + i); i++)
+        ;
+    return (i == b);
+}
 
 char KernFile::truncate() {}

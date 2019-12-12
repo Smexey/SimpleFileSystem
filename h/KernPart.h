@@ -12,5 +12,7 @@ public:
     virtual ClusterNo getNumOfClusters() const;
     virtual int writeCluster(ClusterNo, const char* buffer);
 
+    
+    ClusterNo getNewEmpty();
     void saveandclose();
 };
