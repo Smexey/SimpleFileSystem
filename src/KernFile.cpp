@@ -63,9 +63,9 @@ bool KernFile::readByte(char* ch) {
         dirtyData = false;
 
         *ch = dataCache[currOffs];
-        setcurr(curr + 1);
-        // posle ili pre setcurr? isto je? prilicno sam siguran da je svj
         currentDataClusOffs = currClus;
+        setcurr(curr + 1);
+
     } else {
         // 2 level indexing
 
@@ -100,9 +100,9 @@ bool KernFile::readByte(char* ch) {
         dirtyData = false;
 
         *ch = dataCache[currOffs];
-        setcurr(curr + 1);
-        // posle ili pre setcurr? isto je? prilicno sam siguran da je svj
+
         currentDataClusOffs = currClus;
+        setcurr(curr + 1);
     }
     return true;
 }
@@ -115,14 +115,17 @@ BytesCnt KernFile::read(BytesCnt b, char* buffer) {
 }
 
 bool KernFile::writeByte(char* ch) {
+    // moze da se upise gde oces
+
     // return false na fail readcluster???
 
     // check cache
     if (currClus == currentDataClusOffs) {
         *ch = dataCache[currOffs];
-        // dirty alrdy set
+        dirtyData = true;
+
+        if (curr == size) size++;  // ako upisuje na kraj
         setcurr(curr + 1);
-        size++;
 
         return true;
     }
@@ -132,23 +135,28 @@ bool KernFile::writeByte(char* ch) {
         // need new data cache
         if (dirtyData) {
             part->writeCluster(dataCacheClusNum, dataCache);
+            dirtyData = false;
         }
 
-        ClusterNo newClus = part->getNewEmpty();
-
-        // new lvl1 ind
-        dataCacheClusNum = newClus;
-        ((ClusterNo*)rootCache)[currClus] = dataCacheClusNum;
-        dirtyRoot = true;
+        // kraj datacache
+        if (curr == size && size % ClusterSize == 0) {
+            // new lvl1 ind
+            dataCacheClusNum = part->getNewEmpty();
+            ((ClusterNo*)rootCache)[currClus] = dataCacheClusNum;
+            dirtyRoot = true;
+            size++;  // jer se upisuje na kraj svakako
+        } else {
+            dataCacheClusNum = ((ClusterNo*)rootCache)[currClus];
+            // ne upisuje na kraj znaci ne menja se size
+        }
 
         part->readCluster(dataCacheClusNum, dataCache);
+        currentDataClusOffs = currClus;
 
         dataCache[currOffs] = *ch;
         dirtyData = true;
 
         setcurr(curr + 1);
-        // posle ili pre setcurr? isto je? prilicno sam siguran da je svj
-        currentDataClusOffs = currClus;
     } else {
         // 2 level indexing
 
@@ -161,47 +169,63 @@ bool KernFile::writeByte(char* ch) {
 
         //(curr - singleTableInd) % clusIndNum;  *ClusterSize
         bool endofhelpcache =
-            (size - ClusterSize * singleTableInd) % (ClusterSize * clusIndNum) == 0;
+            size == curr && (size - ClusterSize * singleTableInd) % (ClusterSize * clusIndNum) == 0;
 
         // size je uvek curr?
         // los uslov za append???
         if (endofhelpcache) {
+            // if (dirtyHelp) {
+            //     part->writeCluster(helpCacheClusNum, helpCache);
+            //     dirtyHelp = false;
+            // }
+            // new lvl2 ind
+
+            // namesti t da bude los za sledeci if
+            t = part->getNewEmpty();
+            ((ClusterNo*)rootCache)[lvl1ind] = t;
+            dirtyRoot = true;
+
+            // // redundantno? mozda za append?
+            // part->readCluster(helpCacheClusNum, helpCache);
+            // dirtyHelp = false;
+        }
+        if (helpCacheClusNum != t) {
             if (dirtyHelp) {
                 part->writeCluster(helpCacheClusNum, helpCache);
             }
-
-            ClusterNo newClus = part->getNewEmpty();
-            // new lvl2 ind
-            helpCacheClusNum = newClus;
-            ((ClusterNo*)rootCache)[currClus] = t;
-            dirtyRoot = true;
-
-            // redundantno? mozda za append?
+            helpCacheClusNum = t;
             part->readCluster(helpCacheClusNum, helpCache);
             dirtyHelp = false;
         }
 
-        // // ((x-256)%512) offs od starta jednog od lvl2 clus
         ClusterNo lvl2ind = (currClus - singleTableInd) % clusIndNum;
+        t = ((ClusterNo*)helpCache)[lvl2ind];
 
-        // new lvl2 => data also not cached, would have had a hit prior
-        ClusterNo newClus = part->getNewEmpty();
+        if (curr == size && size % ClusterSize == 0) {
+            // novi stavi u t
+            t = part->getNewEmpty();
+            ((ClusterNo*)helpCache)[lvl2ind] = t;
+            dirtyHelp = true;
+            size++;  // jer se upisuje na kraj svakako
+        }
 
-        dataCacheClusNum = newClus;
-
-        // update helpcache
-        ((ClusterNo*)helpCache)[lvl2ind] = dataCacheClusNum;
-        dirtyHelp = true;
+        if (dataCacheClusNum != t) {
+            if (dirtyData) {
+                part->writeCluster(dataCacheClusNum, dataCache);
+            }
+            dataCacheClusNum = t;
+            part->readCluster(dataCacheClusNum, dataCache);
+            dirtyData = false;
+        }
 
         part->readCluster(dataCacheClusNum, dataCache);
-
+        // dataCacheClusNum = currClus;
         dataCache[currOffs] = *ch;
         dirtyData = true;
+        currentDataClusOffs = currClus;
 
         setcurr(curr + 1);
-        currentDataClusOffs = currClus;
     }
-    size++;
     return true;
 }
 
