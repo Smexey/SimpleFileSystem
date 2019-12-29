@@ -4,6 +4,16 @@
 #include "fs.h"
 #include "synch.h"
 
+
+struct Entry {
+    char name[FNAMELEN];
+    char ext[FEXTLEN];
+    char reserved;
+    unsigned long indexCluster;
+    unsigned long size;
+};
+
+
 class KernFS {
     KernPart* kernpart;
     CRITICAL_SECTION cs;

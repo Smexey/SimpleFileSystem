@@ -1,4 +1,3 @@
-// File: fs.h
 #pragma once
 typedef long FileCnt;
 typedef unsigned long BytesCnt;
@@ -6,7 +5,7 @@ typedef unsigned long BytesCnt;
 const unsigned int FNAMELEN = 8;
 const unsigned int FEXTLEN = 3;
 
-class KernelFS;
+class KernFS;
 class Partition;
 class File;
 

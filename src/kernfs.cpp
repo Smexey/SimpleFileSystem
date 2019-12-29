@@ -26,9 +26,10 @@ char KernFS::unmount() {
     CriticalSectionLock lck(cs);
     kernpart->saveandclose();
 
-    signal(mountedsem);
+    
     delete kernpart;
     kernpart = nullptr;
+    signal(mountedsem);
     return 0;
 }
 

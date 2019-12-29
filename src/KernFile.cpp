@@ -1,25 +1,46 @@
 #include "KernFile.h"
+#include "FileControl.h"
+KernFile::KernFile(FileControl *fcc, KernPart* p, char m) : part(p), mode(m) {
+    // // HEADER CLASS sa size, start itd
+    // // FC class-> numofwr numofrd synch ...
+    // // size = header.size
 
-KernFile::KernFile(KernPart* p, char m) : part(p), mode(m) {
-    // HEADER CLASS sa size, start itd
-    // FC class-> numofwr numofrd synch ...
-    // size = header.size
+    // // load root???????????
+    // switch (mode) {
+    //     case 'a':
+    //         setcurr(size);
+    //         // treba ucitati sva tri cachea
+    //         break;
 
-    // load root???????????
-    switch (mode) {
-        case 'a':
-            setcurr(size);
-            // treba ucitati sva tri cachea
-            break;
+    //     case 'w':
+    //         setcurr(0);
+    //         truncate();
+    //         break;
 
-        case 'w':
-            setcurr(0);
-            truncate();
-            break;
+    //     default:
+    //         break;
+    // }
+    myMode = mode;
+    myElem = elem;
+    myPartition = myPart;
 
-        default:
-            break;
-    }
+    mySize = myElem->entry->size;
+
+    myBufClus = FREEBUFFER;
+    myDataBufClusNum = FREEBUFFER;
+    myHelpBufClusNum = FREEBUFFER;
+    myRootBufClusNum = myElem->entry->indexCluster;
+    myPartition->readCluster(myRootBufClusNum, myRootBuffer);
+    dirtyRoot = dirtyHelp = dirtyData = false;
+    if (mode == 'a') {
+        posClus = mySize / ClusterSize;
+        offClus = mySize % ClusterSize;
+        pos = mySize;
+    } else
+        posClus = offClus = pos = 0;
+    if (myMode == 'w' || myMode == 'd') truncate();
+
+
 }
 
 KernFile::~KernFile() {}
