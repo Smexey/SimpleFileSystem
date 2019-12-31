@@ -39,7 +39,7 @@ private:
     Partition* part;
 
 public:
-    Sem myPartSem;
+    Sem mutex;
     Sem deleteSem;
 
     bool marked = false;
