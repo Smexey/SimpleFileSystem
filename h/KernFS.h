@@ -1,27 +1,33 @@
 // File: fs.h
 #pragma once
-#include "KernPart.h"
-#include "fs.h"
+#include "FS.h"
 #include "synch.h"
 
+class KernPart;
 
 struct Entry {
-    char name[FNAMELEN];
-    char ext[FEXTLEN];
+    char name[fileNameLen];
+    char ext[fileExtLen];
     char reserved;
     unsigned long indexCluster;
     unsigned long size;
-};
+    char off[fileFreeLen] = {0};
 
+    friend ostream& operator<<(ostream& os, const Entry& e);
+    bool nameEq(char* fname);
+
+    // no non copy constr
+    Entry(const Entry& ent);
+};
 
 class KernFS {
     KernPart* kernpart;
-    CRITICAL_SECTION cs;
-    HANDLE mountedsem;
+    Sem mountedsem;
+    Sem mutex;
 
-protected:
-    KernFS(const KernFS&);             // Prevent construction by copying
-    KernFS& operator=(const KernFS&);  // Prevent assignment
+    /*protected:
+        KernFS(const KernFS&);             // Prevent construction by copying
+        KernFS& operator=(const KernFS&);  // Prevent assignment*/
 public:
     KernFS();
     ~KernFS();

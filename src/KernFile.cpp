@@ -1,50 +1,25 @@
 #include "KernFile.h"
-#include "FileControl.h"
-KernFile::KernFile(FileControl *fcc, KernPart* p, char m) : part(p), mode(m) {
-    // // HEADER CLASS sa size, start itd
-    // // FC class-> numofwr numofrd synch ...
-    // // size = header.size
 
-    // // load root???????????
-    // switch (mode) {
-    //     case 'a':
-    //         setcurr(size);
-    //         // treba ucitati sva tri cachea
-    //         break;
+KernFile::KernFile(FileControl* fc, KernPart* p, char m)
+    : part(p), mode(m), fc(fc), size(fc->getEntry()->size) {
+    rootCacheClusNum = fc->getEntry()->indexCluster;
+    part->readCluster(rootCacheClusNum, rootCache);
 
-    //     case 'w':
-    //         setcurr(0);
-    //         truncate();
-    //         break;
+    if (mode == 'a')
+        setcurr(size);
+    else
+        setcurr(0);
 
-    //     default:
-    //         break;
-    // }
-    myMode = mode;
-    myElem = elem;
-    myPartition = myPart;
-
-    mySize = myElem->entry->size;
-
-    myBufClus = FREEBUFFER;
-    myDataBufClusNum = FREEBUFFER;
-    myHelpBufClusNum = FREEBUFFER;
-    myRootBufClusNum = myElem->entry->indexCluster;
-    myPartition->readCluster(myRootBufClusNum, myRootBuffer);
-    dirtyRoot = dirtyHelp = dirtyData = false;
-    if (mode == 'a') {
-        posClus = mySize / ClusterSize;
-        offClus = mySize % ClusterSize;
-        pos = mySize;
-    } else
-        posClus = offClus = pos = 0;
-    if (myMode == 'w' || myMode == 'd') truncate();
-
-
+    if (mode == 'w') truncate();
 }
 
-KernFile::~KernFile() {}
+KernFile::~KernFile() {
+    if (dirtyRoot) part->writeCluster(rootCacheClusNum, rootCache);
+    if (dirtyHelp) part->writeCluster(helpCacheClusNum, helpCache);
+    if (dirtyData) part->writeCluster(dataCacheClusNum, dataCache);
 
+    part->close(this);
+}
 BytesCnt KernFile::filePos() { return curr; }
 
 char KernFile::eof() {
@@ -58,6 +33,8 @@ char KernFile::seek(BytesCnt b) {
     setcurr(b);
     return 1;
 }
+
+// KernFile::KernFile() {}
 
 BytesCnt KernFile::getFileSize() { return size; }
 
@@ -142,7 +119,7 @@ bool KernFile::writeByte(char* ch) {
 
     // check cache
     if (currClus == currentDataClusOffs) {
-        *ch = dataCache[currOffs];
+        dataCache[currOffs] = *ch;
         dirtyData = true;
 
         if (curr == size) size++;  // ako upisuje na kraj
@@ -184,13 +161,14 @@ bool KernFile::writeByte(char* ch) {
         ClusterNo t;
         // ((x-256)/512) offs od pola
         // + 256 offs od starta
-        ClusterNo lvl1ind = (curr - singleTableInd) / clusIndNum + singleTableInd;
+        ClusterNo lvl1ind = (currClus - singleTableInd) / clusIndNum + singleTableInd;
 
         t = ((ClusterNo*)rootCache)[lvl1ind];
 
         //(curr - singleTableInd) % clusIndNum;  *ClusterSize
         bool endofhelpcache =
-            size == curr && (size - ClusterSize * singleTableInd) % (ClusterSize * clusIndNum) == 0;
+            (size == curr) &&
+            (size - ClusterSize * singleTableInd) % (ClusterSize * clusIndNum) == 0;
 
         // size je uvek curr?
         // los uslov za append???
@@ -252,8 +230,17 @@ bool KernFile::writeByte(char* ch) {
 
 char KernFile::write(BytesCnt b, char* buffer) {
     BytesCnt i;
-    for (i = 0; i < b && writeByte(buffer + i); i++)
-        ;
+    int j = 0;
+    for (i = 0; i < b && writeByte(buffer + i); i++) {
+        // if(i % 100000 == 0 && i!=0) {
+        //	cout << i << endl;
+        //
+        //}
+        // if (i == 2037758) {
+        //	cout << "2mil";
+        //}
+    }
+
     return (i == b);
 }
 

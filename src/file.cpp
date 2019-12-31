@@ -1,15 +1,14 @@
 #include "file.h"
-#include "KernFile.h"
 
-File::File() { myImpl = new KernFile(); }
+class KernFile;
+
+File::File(KernFile* k) : myImpl(k) {}
 
 File::~File() { delete myImpl; }
 
 char File::write(BytesCnt b, char* buffer) { return myImpl->write(b, buffer); }
 
-BytesCnt File::read(BytesCnt b, char* buffer) {
-    return myImpl->read(b, buffer);
-}
+BytesCnt File::read(BytesCnt b, char* buffer) { return myImpl->read(b, buffer); }
 
 char File::seek(BytesCnt b) { return myImpl->seek(b); }
 

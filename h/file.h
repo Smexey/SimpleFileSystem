@@ -1,7 +1,8 @@
 #pragma once
 #include "FS.h"
-class KernFile;
+#include "KernFile.h"
 
+// class KernFile;
 class File {
 public:
     ~File();  // zatvaranje fajla
@@ -12,10 +13,11 @@ public:
     char eof();
     BytesCnt getFileSize();
     char truncate();
+    File(KernFile* k);
 
 private:
     friend class FS;
-    friend class KernelFS;
-    File();  // objekat fajla se može kreirati samootvaranjem
+    friend class KernFS;
+    // objekat fajla se može kreirati samootvaranjem
     KernFile* myImpl;
 };

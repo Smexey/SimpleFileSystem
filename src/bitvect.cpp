@@ -4,9 +4,8 @@
 #include "kernpart.h"
 
 BitVector::BitVector(ClusterNo sz, KernPart* p) : part(p), size(sz) {
-    InitializeCriticalSection(&cs);
     // bitvect pocinje od nule, zauzima vise od jednog clustera???
-
+    mutex = CreateSemaphore(0, 1, 1, 0);
     // jedan vise od size
     clusterNum = size / BitClusterSize + (ClusterNo)(size % BitClusterSize > 0);
     cachefree = new list<ClusterNo>();
@@ -27,29 +26,29 @@ BitVector::BitVector(ClusterNo sz, KernPart* p) : part(p), size(sz) {
 void BitVector::findFree() {
     // finds next free from current freeCL
     // greska ako ne nadje nista?
-    while (!bitVect[freeCl / BitClusterSize][(freeCl % BitClusterSize) / 8] &
-           (1 << (7 - freeCl % 8)))
-        freeCl = (freeCl + 1) % size;
+
+    // CriticalSection lck(mutex);
+
+    while (!(bitVect[freeCl / BitClusterSize][(freeCl % BitClusterSize) / 8] &
+             ((1 << (7 - freeCl % 8))))) {
+        freeCl = (freeCl + 1);
+    }
+    if (freeCl >= size) cout << "nema mesta" << endl;
 
     // inf while ako ne nadje lolololol
 }
 
 ClusterNo BitVector::getFirstEmpty() {
-    CriticalSectionLock lck(cs);
+    CriticalSection lck(mutex);
 
     while (!cachefree->empty()) {
         ClusterNo tmp = cachefree->front();
         cachefree->pop_front();
 
-        if (!bitVect[tmp / BitClusterSize][(tmp % BitClusterSize) / 8] &
-            ((1 << (7 - tmp % 8)))) {
-            cout << "BitVector::getFirstEmpty() - "
-                    "?????????"
-                 << endl;
-            continue;
+        // if error?
+        if ((bitVect[tmp / BitClusterSize][(tmp % BitClusterSize) / 8] & ((1 << (7 - tmp % 8))))) {
+            return tmp;
         }
-
-        return tmp;
     }
 
     findFree();
@@ -64,7 +63,7 @@ ClusterNo BitVector::getFirstEmpty() {
 }
 
 void BitVector::free(ClusterNo cl) {
-    CriticalSectionLock lck(cs);
+    CriticalSection lck(mutex);
     // cache free
     cachefree->push_back(cl);
     setFree(cl);
@@ -89,7 +88,7 @@ void BitVector::format() {
 }
 
 void BitVector::writeToDisk() {
-    for (int i = 0; i < clusterNum; i++) part->writeCluster(i, bitVect[i]);
+    for (size_t i = 0; i < clusterNum; i++) part->writeCluster(i, bitVect[i]);
 }
 
 ClusterNo BitVector::getRootPosition() { return clusterNum; }

@@ -1,24 +1,13 @@
 #pragma once
+// File: fs.h
 typedef long FileCnt;
 typedef unsigned long BytesCnt;
-
-const unsigned int FNAMELEN = 8;
-const unsigned int FEXTLEN = 3;
-
+const unsigned int fileNameLen = 8;
+const unsigned int fileExtLen = 3;
+const unsigned int fileFreeLen = 12;
 class KernFS;
 class Partition;
 class File;
-
-const unsigned int FNAMELEN = 8;
-const unsigned int FEXTLEN = 3;
-
-struct Entry {
-    char name[FNAMELEN];
-    char ext[FEXTLEN];
-    char reserved;
-    unsigned long indexCluster;
-    unsigned long size;
-};
 
 class FS {
 public:

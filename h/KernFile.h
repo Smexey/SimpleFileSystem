@@ -1,13 +1,17 @@
 #pragma once
 #include "KernPart.h"
-#include "file.h"
 #include "fs.h"
+#include "part.h"
+
+typedef unsigned long ClusterNo;
+const ClusterNo clusIndNum = 512ul;
+const ClusterNo nullClusterNo = -1;  // init values
+const ClusterNo singleTableInd = clusIndNum / 2;
+class File;
 
 class KernFile {
-    constexpr static ClusterNo clusIndNum = 512;
-    constexpr static ClusterNo nullClusterNo = -1;  // init values
-    constexpr static ClusterNo singleTableInd = clusIndNum / 2;
-
+    friend class KernPart;
+    // FileControl* fc;
     char mode;
     KernPart* part;
     BytesCnt size;
@@ -44,7 +48,9 @@ class KernFile {
     }
 
 public:
-    KernFile(KernPart* p, char m);
+    FileControl* fc;
+    // KernFile();
+    KernFile(FileControl* fc, KernPart* p, char m);
 
     ~KernFile();
 
