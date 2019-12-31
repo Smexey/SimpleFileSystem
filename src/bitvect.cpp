@@ -27,7 +27,7 @@ void BitVector::findFree() {
     // finds next free from current freeCL
     // greska ako ne nadje nista?
 
-    // CriticalSection lck(mutex);
+    CriticalSection lck(mutex);
 
     while (!(bitVect[freeCl / BitClusterSize][(freeCl % BitClusterSize) / 8] &
              ((1 << (7 - freeCl % 8))))) {
@@ -70,7 +70,7 @@ void BitVector::free(ClusterNo cl) {
 }
 
 void BitVector::format() {
-    // CriticalSectionLock lck(cs);
+    CriticalSection lck(mutex);
 
     for (size_t i = 0; i < clusterNum; i++)
         for (int j = 0; j < ClusterSize; j++) bitVect[i][j] = -1;
