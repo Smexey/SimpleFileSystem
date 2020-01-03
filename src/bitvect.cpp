@@ -24,7 +24,7 @@ BitVector::BitVector(ClusterNo sz, KernPart* p) : part(p), size(sz) {
 }
 
 void BitVector::findFree() {
-    //already locked!!!
+    // already locked!!!
 
     while (!(bitVect[freeCl / BitClusterSize][(freeCl % BitClusterSize) / 8] &
              ((1 << (7 - freeCl % 8))))) {
