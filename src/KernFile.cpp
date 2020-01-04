@@ -107,8 +107,7 @@ bool KernFile::readByte(char* ch) {
 
 BytesCnt KernFile::read(BytesCnt b, char* buffer) {
     BytesCnt i;
-    for (i = 0; i < b && readByte(buffer + i); i++)
-        ;
+    for (i = 0; i < b && readByte(buffer + i); i++);
     return i;
 }
 
@@ -124,7 +123,6 @@ bool KernFile::writeByte(char* ch) {
 
         if (curr == size) size++;  // ako upisuje na kraj
         setcurr(curr + 1);
-
         return true;
     }
 
@@ -142,7 +140,7 @@ bool KernFile::writeByte(char* ch) {
             dataCacheClusNum = part->getNewEmpty();
             ((ClusterNo*)rootCache)[currClus] = dataCacheClusNum;
             dirtyRoot = true;
-            size++;  // jer se upisuje na kraj svakako
+            //size++;  // jer se upisuje na kraj svakako
         } else {
             dataCacheClusNum = ((ClusterNo*)rootCache)[currClus];
             // ne upisuje na kraj znaci ne menja se size
@@ -153,7 +151,7 @@ bool KernFile::writeByte(char* ch) {
 
         dataCache[currOffs] = *ch;
         dirtyData = true;
-
+		if (curr == size) size++;
         setcurr(curr + 1);
     } else {
         // 2 level indexing
@@ -205,7 +203,7 @@ bool KernFile::writeByte(char* ch) {
             t = part->getNewEmpty();
             ((ClusterNo*)helpCache)[lvl2ind] = t;
             dirtyHelp = true;
-            size++;  // jer se upisuje na kraj svakako
+            //size++;  // jer se upisuje na kraj svakako
         }
 
         if (dataCacheClusNum != t) {
@@ -223,6 +221,7 @@ bool KernFile::writeByte(char* ch) {
         dirtyData = true;
         currentDataClusOffs = currClus;
 
+		if (curr == size) size++;
         setcurr(curr + 1);
     }
     return true;
@@ -230,16 +229,8 @@ bool KernFile::writeByte(char* ch) {
 
 char KernFile::write(BytesCnt b, char* buffer) {
     BytesCnt i;
-    int j = 0;
-    for (i = 0; i < b && writeByte(buffer + i); i++) {
-        // if(i % 100000 == 0 && i!=0) {
-        //	cout << i << endl;
-        //
-        //}
-        // if (i == 2037758) {
-        //	cout << "2mil";
-        //}
-    }
+	BytesCnt j = 0;
+	for (i = 0; i < b && writeByte(buffer + i); i++);
 
     return (i == b);
 }
